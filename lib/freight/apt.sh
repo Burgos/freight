@@ -334,14 +334,15 @@ EOF
     SOURCE="$(apt_binary_sourcename "$CONTROL")"
     FILENAME="${NAME}_${VERSION##*:}_${ARCH}.deb"
 
-    # Link this package into the pool.
+    # Link or copy this package into the pool.
     POOL="pool/$DIST/$COMP/$PREFIX/$SOURCE"
     mkdir -p "$VARCACHE/$POOL"
     if [ ! -f "$VARCACHE/$POOL/$FILENAME" ]; then
         if [ "$PACKAGE" != "$FILENAME" ]; then echo "# [freight] adding $PACKAGE to pool (as $FILENAME)" >&2
         else echo "# [freight] adding $PACKAGE to pool" >&2
         fi
-        ln "$DISTCACHE/.refs/$COMP/$PACKAGE" "$VARCACHE/$POOL/$FILENAME"
+        ln "$DISTCACHE/.refs/$COMP/$PACKAGE" "$VARCACHE/$POOL/$FILENAME" >/dev/null 2>&1 ||
+            cp "$DISTCACHE/.refs/$COMP/$PACKAGE" "$VARCACHE/$POOL/$FILENAME"
     fi
 
     # Build a list of the one-or-more `Packages` files to append with
@@ -418,13 +419,14 @@ apt_cache_source() {
     # Package properties.  Remove the epoch from the version number
     # in the package filename, as is customary.
 
-    # Link this source package into the pool.
+    # Link or copy this source package into the pool.
     POOL="pool/$DIST/$COMP/$(apt_prefix "$NAME")/$NAME"
     mkdir -p "$VARCACHE/$POOL"
     for FILENAME in "$DSC_FILENAME" "$ORIG_FILENAME" "$DIFF_FILENAME" "$TAR_FILENAME"; do
         if [ -f "$DISTCACHE/.refs/$COMP/$FILENAME" ] && ! [ -f "$VARCACHE/$POOL/$FILENAME" ]; then
             echo "# [freight] adding $FILENAME to pool" >&2
-            ln "$DISTCACHE/.refs/$COMP/$FILENAME" "$VARCACHE/$POOL"
+            ln "$DISTCACHE/.refs/$COMP/$FILENAME" "$VARCACHE/$POOL" >/dev/null 2>&1 ||
+                cp "$DISTCACHE/.refs/$COMP/$FILENAME" "$VARCACHE/$POOL"
         fi
     done
 
